@@ -34,7 +34,7 @@
 #import "ijkioapplication.h"
 #include "string.h"
 
-static const char *kIJKFFRequiredFFmpegVersion = "ff4.0--ijk0.8.8--20201130--001";
+static const char *kIJKFFRequiredFFmpegVersion = "ff4.0--ijk0.8.8--20210426--001";
 
 // It means you didn't call shutdown if you found this object leaked.
 @interface IJKWeakHolder : NSObject
@@ -1761,6 +1761,11 @@ static int ijkff_inject_callback(void *opaque, int message, void *data, size_t d
 - (void)applicationDidBecomeActive
 {
     NSLog(@"IJKFFMoviePlayerController:applicationDidBecomeActive: %d", (int)[UIApplication sharedApplication].applicationState);
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if (_pauseInBackground) {
+            [self play];
+        }
+    });
 }
 
 - (void)applicationWillResignActive

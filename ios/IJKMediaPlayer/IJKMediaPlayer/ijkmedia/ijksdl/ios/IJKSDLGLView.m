@@ -334,29 +334,31 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
 
 - (void)display: (SDL_VoutOverlay *) overlay
 {
-    if (_didSetupGL == NO)
-        return;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if (_didSetupGL == NO)
+            return;
 
-    if ([self isApplicationActive] == NO)
-        return;
+        if ([self isApplicationActive] == NO)
+            return;
 
-    if (![self tryLockGLActive]) {
-        if (0 == (_tryLockErrorCount % 100)) {
-            NSLog(@"IJKSDLGLView:display: unable to tryLock GL active: %d\n", _tryLockErrorCount);
+        if (![self tryLockGLActive]) {
+            if (0 == (_tryLockErrorCount % 100)) {
+                NSLog(@"IJKSDLGLView:display: unable to tryLock GL active: %d\n", _tryLockErrorCount);
+            }
+            _tryLockErrorCount++;
+            return;
         }
-        _tryLockErrorCount++;
-        return;
-    }
 
-    _tryLockErrorCount = 0;
-    if (_context && !_didStopGL) {
-        EAGLContext *prevContext = [EAGLContext currentContext];
-        [EAGLContext setCurrentContext:_context];
-        [self displayInternal:overlay];
-        [EAGLContext setCurrentContext:prevContext];
-    }
+        _tryLockErrorCount = 0;
+        if (_context && !_didStopGL) {
+            EAGLContext *prevContext = [EAGLContext currentContext];
+            [EAGLContext setCurrentContext:_context];
+            [self displayInternal:overlay];
+            [EAGLContext setCurrentContext:prevContext];
+        }
 
-    [self unlockGLActive];
+        [self unlockGLActive];
+    });
 }
 
 // NOTE: overlay could be NULl
@@ -371,14 +373,16 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
         return;
     }
 
-    [[self eaglLayer] setContentsScale:_scaleFactor];
+    dispatch_async(dispatch_get_main_queue(), ^{ [[self eaglLayer] setContentsScale:_scaleFactor]; });
 
     if (_isRenderBufferInvalidated) {
         NSLog(@"IJKSDLGLView: renderbufferStorage fromDrawable\n");
         _isRenderBufferInvalidated = NO;
 
         glBindRenderbuffer(GL_RENDERBUFFER, _renderbuffer);
-        [_context renderbufferStorage:GL_RENDERBUFFER fromDrawable:(CAEAGLLayer*)self.layer];
+
+        dispatch_async(dispatch_get_main_queue(), ^{ [_context renderbufferStorage:GL_RENDERBUFFER fromDrawable:(CAEAGLLayer*)self.layer]; });
+
         glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_WIDTH, &_backingWidth);
         glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_HEIGHT, &_backingHeight);
         IJK_GLES2_Renderer_setGravity(_renderer, _rendererGravity, _backingWidth, _backingHeight);
