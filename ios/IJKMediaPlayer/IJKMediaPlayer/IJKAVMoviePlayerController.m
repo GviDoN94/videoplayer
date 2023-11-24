@@ -246,7 +246,7 @@ static IJKAVMoviePlayerController* instance;
 {
     AVURLAsset *asset = [AVURLAsset URLAssetWithURL:_playUrl options:nil];
     NSArray *requestedKeys = @[@"playable"];
-    
+
     _playAsset = asset;
     [asset loadValuesAsynchronouslyForKeys:requestedKeys
                          completionHandler:^{
@@ -698,7 +698,7 @@ static IJKAVMoviePlayerController* instance;
 {
     if (_isShutdown)
         return;
-    
+
     [self onError:error];
 }
 
@@ -931,11 +931,21 @@ static IJKAVMoviePlayerController* instance;
                              selector:@selector(applicationWillTerminate)
                                  name:UIApplicationWillTerminateNotification
                                object:nil];
+
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(loadStateDidChange:) name:IJKMPMoviePlayerLoadStateDidChangeNotification object:_player];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(moviePlayBackDidFinish:) name:IJKMPMoviePlayerPlaybackDidFinishNotification object:_player];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(mediaIsPreparedToPlayDidChange:) name:IJKMPMediaPlaybackIsPreparedToPlayDidChangeNotification object:_player];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(moviePlayBackStateDidChange:) name:IJKMPMoviePlayerPlaybackStateDidChangeNotification object:_player];
 }
 
 - (void)unregisterApplicationObservers
 {
     [_notificationManager removeAllObservers:self];
+
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:IJKMPMoviePlayerLoadStateDidChangeNotification object:_player];
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:IJKMPMoviePlayerPlaybackDidFinishNotification object:_player];
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:IJKMPMediaPlaybackIsPreparedToPlayDidChangeNotification object:_player];
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:IJKMPMoviePlayerPlaybackStateDidChangeNotification object:_player];
 }
 
 -(BOOL)allowsMediaAirPlay
@@ -1008,6 +1018,44 @@ static IJKAVMoviePlayerController* instance;
 {
     _isDanmakuMediaAirPlay = isDanmakuMediaAirPlay;
     [[NSNotificationCenter defaultCenter] postNotificationName:IJKMPMoviePlayerIsAirPlayVideoActiveDidChangeNotification object:nil userInfo:nil];
+}
+
+- (void)loadStateDidChange:(NSNotification *)notification
+{
+    if ([self loadState] == IJKMPMovieLoadStateUnknown) {
+        NSLog(@"loadStateDidChange: IJKMPMovieLoadStateUnknown");
+    } else if ([self loadState] == IJKMPMovieLoadStatePlayable) {
+        NSLog(@"loadStateDidChange: IJKMPMovieLoadStatePlayable");
+    } else if ([self loadState] == IJKMPMovieLoadStatePlaythroughOK) {
+        NSLog(@"loadStateDidChange: IJKMPMovieLoadStatePlaythroughOK");
+    } else if ([self loadState] == IJKMPMovieLoadStateStalled) {
+        NSLog(@"loadStateDidChange: IJKMPMovieLoadStateStalled");
+    }
+}
+
+- (void)moviePlayBackDidFinish:(NSNotification *)notification
+{
+    int reason = [[[notification userInfo] valueForKey:IJKMPMoviePlayerPlaybackDidFinishNotification] intValue];
+
+    if (reason == 0) {
+        [[self delegate] onPause];
+    } else {
+        NSLog(@"moviePlayBackDidFinish: %d\n", reason);
+    }
+}
+
+- (void)mediaIsPreparedToPlayDidChange:(NSNotification *)notification
+{
+    NSLog(@"mediaIsPreparedToPlayDidChange");
+}
+
+- (void)moviePlayBackStateDidChange:(NSNotification *)notification
+{
+    if ([self playbackState] == IJKMPMoviePlaybackStatePlaying) {
+        [[self delegate] onPlay];
+    } else if ([self playbackState] == IJKMPMoviePlaybackStatePaused) {
+        [[self delegate] onPause];
+    }
 }
 
 - (void)audioSessionInterrupt:(NSNotification *)notification

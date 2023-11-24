@@ -70,7 +70,15 @@
 
 #import "IJKMediaPlayback.h"
 
+@protocol IJKAVMoviePlayerControllerDelegate
+- (void)onPlay;
+- (void)onPause;
+- (void)onError:(NSString *)message;
+@end
+
 @interface IJKAVMoviePlayerController : NSObject <IJKMediaPlayback>
+
+@property(nonatomic, weak) id<IJKAVMoviePlayerControllerDelegate> delegate;
 
 - (id)initWithContentURL:(NSURL *)aUrl;
 - (id)initWithContentURLString:(NSString *)aUrl;

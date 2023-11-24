@@ -46,7 +46,7 @@ typedef NS_OPTIONS(NSUInteger, IJKMPMovieLoadState) {
     IJKMPMovieLoadStatePlaythroughOK  = 1 << 1, // Playback will be automatically started in this state when shouldAutoplay is YES
     IJKMPMovieLoadStateStalled        = 1 << 2, // Playback will be automatically paused in this state, if started
 };
-
+ 
 typedef NS_ENUM(NSInteger, IJKMPMovieFinishReason) {
     IJKMPMovieFinishReasonPlaybackEnded,
     IJKMPMovieFinishReasonPlaybackError,
