@@ -73,7 +73,7 @@
 @protocol IJKAVMoviePlayerControllerDelegate
 - (void)onPlay;
 - (void)onPause;
-- (void)onError:(NSString *)message;
+- (void)onError:(NSError *)error;
 @end
 
 @interface IJKAVMoviePlayerController : NSObject <IJKMediaPlayback>

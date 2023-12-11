@@ -699,6 +699,8 @@ static IJKAVMoviePlayerController* instance;
     if (_isShutdown)
         return;
 
+    NSLog(@"AVPlayer: %@", [[error userInfo] objectForKey: NSLocalizedDescriptionKey]);
+
     [self onError:error];
 }
 
@@ -784,7 +786,7 @@ static IJKAVMoviePlayerController* instance;
             case AVPlayerItemStatusFailed:
             {
                 AVPlayerItem *playerItem = (AVPlayerItem *)object;
-                [self assetFailedToPrepareForPlayback:playerItem.error];
+                [self assetFailedToPrepareForPlayback:[playerItem error]];
             }
                 break;
         }
